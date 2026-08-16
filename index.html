@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Cryptic Underground</title>
+<style>
+:root{
+  --paper:#FBF8F2; --card:#FFFFFF; --ink:#10131A; --ink-soft:#5A5F6B;
+  --rule:#DDD8CC; --line:#0019A8; --stop:#DC241F; --go:#007D32;
+  --shadow:0 1px 2px rgba(16,19,26,.06),0 4px 14px rgba(16,19,26,.08);
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--paper)}
+body{
+  font-family:"Helvetica Neue",Helvetica,Arial,system-ui,sans-serif;
+  color:var(--ink);display:flex;flex-direction:column;
+  padding:var(--safe-t) 0 var(--safe-b);
+  user-select:none;-webkit-user-select:none;
+}
+
+/* ---- masthead ---- */
+header{display:flex;align-items:center;gap:10px;padding:10px 16px 8px}
+.roundel{width:30px;height:30px;flex:0 0 auto;display:block}
+.wordmark{font-size:15px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;line-height:1}
+.wordmark span{display:block;font-size:9.5px;font-weight:500;letter-spacing:.22em;color:var(--ink-soft);margin-top:3px}
+.svc{margin-left:auto;text-align:right;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);line-height:1.5}
+.svc b{display:block;font-size:13px;letter-spacing:.06em;color:var(--ink)}
+.run{display:block;color:var(--go);font-weight:600}
+
+/* ---- grid ---- */
+.stage{flex:0 0 auto;display:flex;justify-content:center;padding:4px 16px 10px}
+.board{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:9px;display:grid;gap:2px}
+.cell{position:relative;background:var(--paper);border-radius:2px;display:flex;align-items:center;
+  justify-content:center;font-size:20px;font-weight:700;line-height:1;cursor:pointer}
+.cell.blocked{background:var(--ink);border-radius:1px;cursor:default}
+.cell.lit{background:#DCE4FF;box-shadow:inset 0 0 0 1.5px #A9BCF5}
+.cell.cur{background:#FFE9A8;box-shadow:inset 0 0 0 2px var(--line)}
+.cell.bad{color:var(--stop)}
+.cell.locked{color:var(--go)}
+.num{position:absolute;top:1px;left:2.5px;font-size:8.5px;font-weight:600;color:var(--ink-soft)}
+
+/* ---- clue board ---- */
+.clueboard{margin:0 16px;background:var(--ink);color:#F4F1E6;border-radius:10px;
+  padding:11px 12px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow)}
+.step{flex:0 0 auto;width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(244,241,230,.35);
+  background:none;color:inherit;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.step:active{background:rgba(244,241,230,.16)}
+.cluetext{flex:1;min-width:0;text-align:center}
+.ref{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#F0C838;margin-bottom:3px}
+.body{font-size:14.5px;line-height:1.35}
+.enu{opacity:.6;font-weight:500}
+
+/* ---- controls ---- */
+.tools{display:flex;gap:8px;padding:10px 16px 6px}
+.tool{flex:1;padding:9px 4px;border:1px solid var(--rule);border-radius:8px;background:var(--card);
+  font:inherit;font-size:10.5px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink);cursor:pointer}
+.tool:active{background:#F0EDE4}
+
+/* ---- keyboard ---- */
+.keys{margin-top:auto;padding:4px 5px 8px;display:flex;flex-direction:column;gap:6px}
+.krow{display:flex;gap:5px;justify-content:center}
+.key{flex:1;max-width:38px;height:44px;border:none;border-radius:6px;background:var(--card);
+  box-shadow:0 1px 1.5px rgba(16,19,26,.16);font:inherit;font-size:17px;font-weight:600;
+  color:var(--ink);cursor:pointer}
+.key:active{background:#E6E2D8}
+.key.wide{max-width:60px;font-size:11px;font-weight:700;letter-spacing:.06em}
+
+/* ---- banner ---- */
+.banner{position:absolute;left:16px;right:16px;top:50%;transform:translateY(-50%) scale(.95);
+  background:var(--card);border-radius:14px;box-shadow:0 10px 40px rgba(16,19,26,.24);
+  padding:26px 22px;text-align:center;opacity:0;pointer-events:none;transition:.28s}
+.banner.up{opacity:1;transform:translateY(-50%) scale(1);pointer-events:auto}
+.banner h2{margin:12px 0 6px;font-size:17px;letter-spacing:.1em;text-transform:uppercase}
+.banner p{margin:0 0 16px;font-size:13.5px;color:var(--ink-soft);line-height:1.5}
+.toast{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--safe-b) + 210px);
+  background:var(--ink);color:#F4F1E6;font-size:12px;letter-spacing:.04em;padding:8px 15px;
+  border-radius:20px;opacity:0;transition:.22s;pointer-events:none}
+.toast.up{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <svg class="roundel" viewBox="0 0 100 100" aria-hidden="true">
+    <circle cx="50" cy="50" r="38" fill="none" stroke="#0019A8" stroke-width="15"/>
+    <rect id="rbar" x="4" y="42" width="92" height="16" fill="#0019A8"/>
+  </svg>
+  <div class="wordmark">Cryptic<span>Underground</span></div>
+  <div class="svc"><b id="svcName">—</b><span id="svcDate">—</span><span id="streak" class="run"></span></div>
+</header>
+
+<div class="stage"><div class="board" id="board"></div></div>
+
+<div class="clueboard">
+  <button class="step" id="prev" aria-label="Previous clue">‹</button>
+  <div class="cluetext">
+    <div class="ref" id="ref">—</div>
+    <div class="body"><span id="clue">Tap a square to begin.</span> <span class="enu" id="enu"></span></div>
+  </div>
+  <button class="step" id="next" aria-label="Next clue">›</button>
+</div>
+
+<div class="tools">
+  <button class="tool" id="bHint">Hint</button>
+  <button class="tool" id="bCheck">Check</button>
+  <button class="tool" id="bReveal">Reveal word</button>
+</div>
+
+<div class="keys" id="keys"></div>
+
+<div class="banner" id="banner">
+  <svg width="46" height="46" viewBox="0 0 100 100" style="margin:0 auto">
+    <circle cx="50" cy="50" r="38" fill="none" stroke="#007D32" stroke-width="15"/>
+    <rect x="4" y="42" width="92" height="16" fill="#007D32"/>
+  </svg>
+  <h2>Line complete</h2>
+  <p id="bannerMsg"></p>
+  <button class="tool" style="max-width:180px;margin:0 auto" id="bClose">Back to grid</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- storage with graceful fallback ---------- */
+var mem = {};
+function put(k,v){ try{ localStorage.setItem(k,v); }catch(e){ mem[k]=v; } }
+function get(k){ try{ var v=localStorage.getItem(k); return v===null?(k in mem?mem[k]:null):v; }
+                 catch(e){ return (k in mem)?mem[k]:null; } }
+
+/* ---------- clue bank: answer -> clue variants ---------- */
+/* Written once, reused by every grid using that answer.        */
+var CLUES = {
+"ALERT": [
+"Later reorganised to be watchful"
+],
+"CACHE": [
+"Money, by the sound of it, in the store"
+],
+"CRAFT": [
+"Clubs boat \u2014 that takes skill"
+],
+"DIG": [
+"Excavate part of a prodigal sum"
+],
+"DRIP": [
+"Daughter's tear starts a trickle"
+],
+"DYE": [
+"Colour, or expire, we hear"
+],
+"EVER": [
+"Always part of clever thinking"
+],
+"GRAFT": [
+"Hard work, or a transplant"
+],
+"GREED": [
+"Good plant shows avarice"
+],
+"HALO": [
+"Laugh, then look up \u2014 there's a ring of light"
+],
+"HEEL": [
+"Scoundrel turning up in the wheel"
+],
+"IDEALLY": [
+"Allied forces regrouped around an unknown \u2014 perfectly!"
+],
+"INTER": [
+"Bury in winter"
+],
+"OPT": [
+"Choose to adopt, in part"
+],
+"PAGEANT": [
+"Servant and insect make a spectacle"
+],
+"SHE": [
+"Woman appears in washes"
+],
+"SHELTER": [
+"Her lets rebuilt to give refuge"
+],
+"SHOVE": [
+"Sun's first over Hove \u2014 give it a push"
+],
+"STAT": [
+"Figure lifted from a thermostat"
+],
+"TAKEN": [
+"Take note: this seat is occupied"
+],
+"TENT": [
+"Ten with time to spare, under canvas"
+],
+"TON": [
+"Not turning back \u2014 that's a great weight"
+],
+"WET": [
+"Damp out west with an alien"
+],
+"WOKEN": [
+"Know English badly, being roused"
+]
+};
+
+/* ---------- puzzle set (grids + answers, clues looked up) ---------- */
+var ALL_PUZZLES = [
+{
+"id": "cu-0001",
+"size": 5,
+"service": "Circle",
+"colour": "#FFD329",
+"grid": [
+"#....",
+"#....",
+".....",
+"....#",
+"....#"
+],
+"entries": [
+{
+"a": "STAT",
+"r": 0,
+"c": 1,
+"dir": "A"
+},
+{
+"a": "HALO",
+"r": 1,
+"c": 1,
+"dir": "A"
+},
+{
+"a": "WOKEN",
+"r": 2,
+"c": 0,
+"dir": "A"
+},
+{
+"a": "EVER",
+"r": 3,
+"c": 0,
+"dir": "A"
+},
+{
+"a": "TENT",
+"r": 4,
+"c": 0,
+"dir": "A"
+},
+{
+"a": "WET",
+"r": 2,
+"c": 0,
+"dir": "D"
+},
+{
+"a": "SHOVE",
+"r": 0,
+"c": 1,
+"dir": "D"
+},
+{
+"a": "TAKEN",
+"r": 0,
+"c": 2,
+"dir": "D"
+},
+{
+"a": "ALERT",
+"r": 0,
+"c": 3,
+"dir": "D"
+},
+{
+"a": "TON",
+"r": 0,
+"c": 4,
+"dir": "D"
+}
+]
+},
+{
+"id": "cu-0002",
+"size": 7,
+"service": "Central",
+"colour": "#DC241F",
+"grid": [
+"##...#.",
+"#.#....",
+".......",
+"#.....#",
+".......",
+"....#.#",
+".#...##"
+],
+"entries": [
+{
+"a": "DIG",
+"r": 0,
+"c": 2,
+"dir": "A"
+},
+{
+"a": "DRIP",
+"r": 1,
+"c": 3,
+"dir": "A"
+},
+{
+"a": "PAGEANT",
+"r": 2,
+"c": 0,
+"dir": "A"
+},
+{
+"a": "CRAFT",
+"r": 3,
+"c": 1,
+"dir": "A"
+},
+{
+"a": "SHELTER",
+"r": 4,
+"c": 0,
+"dir": "A"
+},
+{
+"a": "HEEL",
+"r": 5,
+"c": 0,
+"dir": "A"
+},
+{
+"a": "DYE",
+"r": 6,
+"c": 2,
+"dir": "A"
+},
+{
+"a": "SHE",
+"r": 4,
+"c": 0,
+"dir": "D"
+},
+{
+"a": "CACHE",
+"r": 1,
+"c": 1,
+"dir": "D"
+},
+{
+"a": "GREED",
+"r": 2,
+"c": 2,
+"dir": "D"
+},
+{
+"a": "IDEALLY",
+"r": 0,
+"c": 3,
+"dir": "D"
+},
+{
+"a": "GRAFT",
+"r": 0,
+"c": 4,
+"dir": "D"
+},
+{
+"a": "INTER",
+"r": 1,
+"c": 5,
+"dir": "D"
+},
+{
+"a": "OPT",
+"r": 0,
+"c": 6,
+"dir": "D"
+}
+]
+}
+];
+
+/* Only serve puzzles whose every answer has a clue written. */
+var PUZZLES = ALL_PUZZLES.filter(function(p){
+  return p.entries.every(function(e){ return CLUES[e.a] && CLUES[e.a].length; });
+});
+
+/* ---------- day selection ---------- */
+var EPOCH = Date.UTC(2026,0,1);
+function dayIndex(){
+  var n=new Date(), t=Date.UTC(n.getFullYear(),n.getMonth(),n.getDate());
+  return Math.max(0, Math.floor((t-EPOCH)/86400000));
+}
+var P = PUZZLES[dayIndex() % PUZZLES.length];
+var N = P.size;
+
+/* ---------- model ---------- */
+var blocked=[], letters=[], locked=[], nums=[], entries=P.entries;
+(function init(){
+  for(var r=0;r<N;r++){
+    blocked[r]=[]; letters[r]=[]; locked[r]=[]; nums[r]=[];
+    for(var c=0;c<N;c++){
+      blocked[r][c] = P.grid[r][c]==="#";
+      letters[r][c]=""; locked[r][c]=false; nums[r][c]=0;
+    }
+  }
+  var n=0;
+  for(var i=0;i<entries.length;i++){
+    var e=entries[i];
+    if(!nums[e.r][e.c]) nums[e.r][e.c]=++n;
+    e.num=nums[e.r][e.c];
+    var v=CLUES[e.a]; e.clue = v[dayIndex() % v.length];
+    e.cells=[];
+    for(var k=0;k<e.a.length;k++)
+      e.cells.push(e.dir==="A"?[e.r,e.c+k]:[e.r+k,e.c]);
+  }
+  entries.sort(function(x,y){ return x.num-y.num || (x.dir==="A"?-1:1); });
+})();
+
+var cur = 0, pos = 0, hintsUsed = 0, revealed = 0;
+
+/* ---------- restore ---------- */
+(function restore(){
+  var raw = get("cu:"+P.id);
+  if(!raw) return;
+  try{
+    var s = JSON.parse(raw);
+    if(s.letters && s.letters.length===N){
+      letters = s.letters; locked = s.locked || locked;
+      hintsUsed = s.hints||0; revealed = s.rev||0;
+    }
+  }catch(e){}
+})();
+function save(){
+  put("cu:"+P.id, JSON.stringify({letters:letters,locked:locked,hints:hintsUsed,rev:revealed}));
+}
+
+/* ---------- build board ---------- */
+var board = document.getElementById("board");
+var cellEls = [];
+(function buildBoard(){
+  var pad = 18, gap = 2;
+  var avail = Math.min(window.innerWidth - 32, 420) - pad;
+  var maxH  = Math.max(150, window.innerHeight * 0.40) - pad;
+  var size  = Math.floor(Math.min(avail, maxH) / N) - gap;
+  size = Math.max(30, Math.min(size, 62));
+  board.style.gridTemplateColumns = "repeat("+N+","+size+"px)";
+  board.style.gridAutoRows = size+"px";
+  for(var r=0;r<N;r++){
+    cellEls[r]=[];
+    for(var c=0;c<N;c++){
+      var d=document.createElement("div");
+      d.className = "cell" + (blocked[r][c] ? " blocked" : "");
+      d.style.fontSize = Math.round(size*0.46)+"px";
+      if(!blocked[r][c]){
+        if(nums[r][c]) d.innerHTML = '<span class="num">'+nums[r][c]+'</span>';
+        (function(rr,cc){ d.addEventListener("click", function(){ tapCell(rr,cc); }); })(r,c);
+      }
+      board.appendChild(d); cellEls[r][c]=d;
+    }
+  }
+})();
+
+/* ---------- interaction ---------- */
+function entryAt(r,c,dir){
+  for(var i=0;i<entries.length;i++){
+    if(entries[i].dir!==dir) continue;
+    var cs=entries[i].cells;
+    for(var k=0;k<cs.length;k++) if(cs[k][0]===r&&cs[k][1]===c) return i;
+  }
+  return -1;
+}
+function tapCell(r,c){
+  var e=entries[cur], inCur=false, k;
+  for(k=0;k<e.cells.length;k++) if(e.cells[k][0]===r&&e.cells[k][1]===c){ inCur=true; break; }
+  if(inCur){
+    var other=entryAt(r,c, e.dir==="A"?"D":"A");
+    if(other>=0 && other!==cur){ cur=other; pos=idxIn(entries[cur],r,c); }
+    else pos=k;
+  }else{
+    var a=entryAt(r,c,"A"), d=entryAt(r,c,"D");
+    cur = a>=0?a:d; pos = idxIn(entries[cur],r,c);
+  }
+  draw();
+}
+function idxIn(e,r,c){
+  for(var k=0;k<e.cells.length;k++) if(e.cells[k][0]===r&&e.cells[k][1]===c) return k;
+  return 0;
+}
+function type(ch){
+  var e=entries[cur], cell=e.cells[pos];
+  if(locked[cell[0]][cell[1]]) { advance(1); return; }
+  letters[cell[0]][cell[1]] = ch;
+  cellEls[cell[0]][cell[1]].dataset.bad="0";
+  advance(1); save(); draw(); checkDone();
+}
+function backspace(){
+  var e=entries[cur], cell=e.cells[pos];
+  if(letters[cell[0]][cell[1]] && !locked[cell[0]][cell[1]]) letters[cell[0]][cell[1]]="";
+  else { advance(-1); cell=entries[cur].cells[pos];
+         if(!locked[cell[0]][cell[1]]) letters[cell[0]][cell[1]]=""; }
+  cellEls[cell[0]][cell[1]].dataset.bad="0"; save(); draw();
+}
+function advance(step){
+  var e=entries[cur], p=pos+step;
+  if(p>=0 && p<e.cells.length) pos=p;
+  else if(p>=e.cells.length) pos=e.cells.length-1;
+  else pos=0;
+}
+function hop(step){
+  cur=(cur+step+entries.length)%entries.length; pos=0; draw();
+}
+
+/* ---------- render ---------- */
+function draw(){
+  var e=entries[cur], lit={};
+  for(var k=0;k<e.cells.length;k++) lit[e.cells[k][0]+","+e.cells[k][1]]=1;
+  var cc=e.cells[pos];
+  for(var r=0;r<N;r++) for(var c=0;c<N;c++){
+    if(blocked[r][c]) continue;
+    var el=cellEls[r][c], ch=letters[r][c]||"";
+    var num = nums[r][c] ? '<span class="num">'+nums[r][c]+'</span>' : "";
+    el.innerHTML = num + ch;
+    el.className = "cell"
+      + (locked[r][c]?" locked":"")
+      + (el.dataset.bad==="1"?" bad":"")
+      + (lit[r+","+c] ? (r===cc[0]&&c===cc[1] ? " cur" : " lit") : "");
+  }
+  document.getElementById("ref").textContent =
+    e.num + (e.dir==="A"?" Across":" Down");
+  document.getElementById("clue").textContent = e.clue;
+  document.getElementById("enu").textContent = "("+e.a.length+")";
+  var filled=0, total=0;
+  for(r=0;r<N;r++) for(c=0;c<N;c++) if(!blocked[r][c]){ total++; if(letters[r][c]) filled++; }
+  document.getElementById("rbar").setAttribute("width", String(4 + 92*(filled/total)));
+}
+
+function clearMarks(){
+  for(var r=0;r<N;r++) for(var c=0;c<N;c++)
+    if(cellEls[r][c]) cellEls[r][c].dataset.bad="0";
+}
+
+/* ---------- tools ---------- */
+function toast(msg){
+  var t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("up");
+  clearTimeout(t._h); t._h=setTimeout(function(){ t.classList.remove("up"); },1600);
+}
+document.getElementById("bCheck").addEventListener("click", function(){
+  var wrong=0, any=false;
+  for(var i=0;i<entries.length;i++){
+    var e=entries[i];
+    for(var k=0;k<e.cells.length;k++){
+      var r=e.cells[k][0], c=e.cells[k][1], ch=letters[r][c];
+      if(!ch) continue; any=true;
+      if(ch!==e.a[k]){ cellEls[r][c].dataset.bad="1"; wrong++; }
+    }
+  }
+  draw();
+  toast(!any ? "Nothing to check yet" : wrong ? wrong+" letter"+(wrong>1?"s":"")+" off" : "All correct so far");
+});
+document.getElementById("bHint").addEventListener("click", function(){
+  var e=entries[cur], blanks=[];
+  for(var k=0;k<e.cells.length;k++){
+    var r=e.cells[k][0], c=e.cells[k][1];
+    if(letters[r][c]!==e.a[k]) blanks.push(k);
+  }
+  if(!blanks.length){ toast("This one's already solved"); return; }
+  var k=blanks[0], r=e.cells[k][0], c=e.cells[k][1];
+  letters[r][c]=e.a[k]; locked[r][c]=true; hintsUsed++;
+  clearMarks(); save(); draw(); checkDone();
+  toast("One letter given");
+});
+document.getElementById("bReveal").addEventListener("click", function(){
+  var e=entries[cur];
+  for(var k=0;k<e.cells.length;k++){
+    var r=e.cells[k][0], c=e.cells[k][1];
+    letters[r][c]=e.a[k]; locked[r][c]=true;
+  }
+  revealed++; clearMarks(); save(); draw(); checkDone();
+  toast(e.num+(e.dir==="A"?" Across":" Down")+" revealed");
+});
+document.getElementById("prev").addEventListener("click", function(){ hop(-1); });
+document.getElementById("next").addEventListener("click", function(){ hop(1); });
+document.getElementById("bClose").addEventListener("click", function(){
+  document.getElementById("banner").classList.remove("up");
+});
+
+/* ---------- streak ---------- */
+function recordStreak(){
+  var today = dayIndex();
+  var last = parseInt(get("cu:lastDay")||"-99",10);
+  var run  = parseInt(get("cu:streak")||"0",10);
+  if(last === today) return run;              // already counted today
+  run = (last === today-1) ? run+1 : 1;       // consecutive, or restart
+  put("cu:lastDay", String(today));
+  put("cu:streak", String(run));
+  return run;
+}
+function currentStreak(){
+  var today = dayIndex(), last = parseInt(get("cu:lastDay")||"-99",10);
+  if(last!==today && last!==today-1) return 0; // broken
+  return parseInt(get("cu:streak")||"0",10);
+}
+function showStreak(){
+  var n = currentStreak();
+  document.getElementById("streak").textContent =
+    n>0 ? n + (n===1?" day":" days") : "";
+}
+
+/* ---------- completion ---------- */
+var done=false;
+function checkDone(){
+  if(done) return;
+  for(var i=0;i<entries.length;i++){
+    var e=entries[i];
+    for(var k=0;k<e.cells.length;k++)
+      if(letters[e.cells[k][0]][e.cells[k][1]]!==e.a[k]) return;
+  }
+  done=true;
+  var run = recordStreak(); showStreak();
+  var solo = hintsUsed===0 && revealed===0;
+  document.getElementById("bannerMsg").textContent = solo
+    ? "Finished unaided. The whole grid, no help."
+    : "Finished with "+hintsUsed+" letter"+(hintsUsed===1?"":"s")+" and "+revealed+" answer"+(revealed===1?"":"s")+" given.";
+  if(run>1) document.getElementById("bannerMsg").textContent += "  " + run + " days running.";
+  document.getElementById("banner").classList.add("up");
+  put("cu:done:"+P.id,"1");
+}
+
+/* ---------- keyboard ---------- */
+(function buildKeys(){
+  var rows=["QWERTYUIOP","ASDFGHJKL","ZXCVBNM"], wrap=document.getElementById("keys");
+  rows.forEach(function(row,ri){
+    var d=document.createElement("div"); d.className="krow";
+    if(ri===2){
+      var cl=document.createElement("button");
+      cl.className="key wide"; cl.textContent="CLEAR";
+      cl.addEventListener("click", function(){
+        var e=entries[cur];
+        for(var k=0;k<e.cells.length;k++){
+          var r=e.cells[k][0], c=e.cells[k][1];
+          if(!locked[r][c]) letters[r][c]="";
+        }
+        pos=0; clearMarks(); save(); draw();
+      });
+      d.appendChild(cl);
+    }
+    row.split("").forEach(function(ch){
+      var b=document.createElement("button");
+      b.className="key"; b.textContent=ch;
+      b.addEventListener("click", function(){ type(ch); });
+      d.appendChild(b);
+    });
+    if(ri===2){
+      var bk=document.createElement("button");
+      bk.className="key wide"; bk.textContent="DEL";
+      bk.addEventListener("click", backspace);
+      d.appendChild(bk);
+    }
+    wrap.appendChild(d);
+  });
+})();
+document.addEventListener("keydown", function(ev){
+  if(/^[a-zA-Z]$/.test(ev.key)) type(ev.key.toUpperCase());
+  else if(ev.key==="Backspace"){ ev.preventDefault(); backspace(); }
+  else if(ev.key==="ArrowRight"||ev.key==="ArrowDown") advance(1), draw();
+  else if(ev.key==="ArrowLeft"||ev.key==="ArrowUp") advance(-1), draw();
+  else if(ev.key==="Tab"){ ev.preventDefault(); hop(ev.shiftKey?-1:1); }
+});
+
+/* ---------- go ---------- */
+document.getElementById("svcName").textContent = P.service + " line";
+document.getElementById("svcDate").textContent =
+  new Date().toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+document.querySelector(".ref").style.color = P.colour;
+draw();
+showStreak();
+checkDone();
+</script>
+</body>
+</html>
