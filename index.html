@@ -778,6 +778,7 @@ button:focus-visible,
 .df-btn{appearance:none;border:1px solid var(--rule);background:var(--card);color:var(--ink-soft);border-radius:999px;padding:7px 12px;font:700 11px/1 Arial,sans-serif;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.05)}
 .df-btn:hover{transform:translateY(-1px);color:var(--ink)}
 .df-btn.active{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.df-btn:disabled{opacity:.44;cursor:not-allowed;transform:none}
 .df-btn.easy.active{background:#2a8052;color:#fff;border-color:#2a8052}
 .df-btn.medium.active{background:#9b6814;color:#fff;border-color:#9b6814}
 .df-btn.hard.active{background:#8b2a2a;color:#fff;border-color:#8b2a2a}
@@ -1323,11 +1324,14 @@ document.getElementById("bClose").addEventListener("click", function(){
 
 /* ---------- difficulty navigation ---------- */
 document.querySelectorAll(".df-btn").forEach(function(btn){
+  btn.disabled=btn.dataset.level!=="all"&&!entries.some(function(e){return currentDifficulty(e)===btn.dataset.level;});
+  if(btn.disabled)btn.setAttribute("aria-label",btn.textContent+", no clues at this level today");
   btn.addEventListener("click",function(){
+    var previous=difficultyFilter;
     difficultyFilter=this.dataset.level||"all";
-    document.querySelectorAll(".df-btn").forEach(function(b){ b.classList.toggle("active",b===btn); });
     var list=matchingIndices();
-    if(!list.length){toast("No "+difficultyFilter+" clues in this grid");return;}
+    if(!list.length){difficultyFilter=previous;toast("No "+(this.dataset.level||"selected")+" clues in this grid");return;}
+    document.querySelectorAll(".df-btn").forEach(function(b){ b.classList.toggle("active",b===btn); });
     if(list.indexOf(cur)<0) cur=list[0];
     pos=0;hintStep=0;hideHint();draw();
     var label=difficultyFilter==="all" ? "All clue levels" : difficultyFilter.charAt(0).toUpperCase()+difficultyFilter.slice(1)+" clues";
