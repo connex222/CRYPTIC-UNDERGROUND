@@ -1020,6 +1020,9 @@ if (CU_PRACTICE) {
 
 
 
+/* Non-destructive future-cycle editorial correction: original cu-0282 remains intact for its first 2026 date. */
+var REVISED_DAILY_0282 = {"id":"cu-0282-r2","size":7,"service":"Circle","colour":"#FFCE00","grid":["......#",".##....",".##....",".......","....##.","....##.","#......"],"entries":[{"a":"ABOARD","r":0,"c":0,"dir":"A","clue":"On a ship: a plank","difficulty":"medium"},{"a":"PIED","r":1,"c":3,"dir":"A","clue":"Variegated: pie with daughter","difficulty":"easy"},{"a":"POLE","r":2,"c":3,"dir":"A","clue":"Rod that sounds like a survey","difficulty":"easy"},{"a":"ERRATIC","r":3,"c":0,"dir":"A","clue":"Unpredictable: RICE TAR scattered","difficulty":"easy"},{"a":"ROAR","r":4,"c":0,"dir":"A","clue":"Bellow: right and oar","difficulty":"easy"},{"a":"TOTE","r":5,"c":0,"dir":"A","clue":"Carry TO plus TEA losing its tail","difficulty":"medium"},{"a":"FELINE","r":6,"c":1,"dir":"A","clue":"Catlike: iron followed by line","difficulty":"medium"},{"a":"ADVERT","r":0,"c":0,"dir":"D","clue":"Commercial: a daughter with French green","difficulty":"hard"},{"a":"ROOF","r":3,"c":1,"dir":"D","clue":"Top concealed in proof","difficulty":"easy"},{"a":"RATE","r":3,"c":2,"dir":"D","clue":"Speed when TEAR is rearranged","difficulty":"easy"},{"a":"APPAREL","r":0,"c":3,"dir":"D","clue":"Clothing: A PEARL with an extra P, mixed","difficulty":"hard"},{"a":"RIOT","r":0,"c":4,"dir":"D","clue":"Uproar from TRIO going wild","difficulty":"easy"},{"a":"DELI","r":0,"c":5,"dir":"D","clue":"Shop tucked inside MODEL INDUSTRY","difficulty":"easy"},{"a":"DECADE","r":1,"c":6,"dir":"D","clue":"Ten years: December abbreviated and lemonade's last three","difficulty":"medium"}]};
+
 /* Only serve puzzles whose every answer has a clue written. */
 var PUZZLES = ALL_PUZZLES.filter(function(p){
   return p.entries.every(function(e){ return CLUES[e.a] && CLUES[e.a].length; });
@@ -1032,7 +1035,9 @@ function dayIndex(){
   return Math.max(0, Math.floor((t-EPOCH)/86400000));
 }
 var PUZZLE_DAY=dayIndex();
-var P=PUZZLES[PUZZLE_DAY % PUZZLES.length];
+/* Start using the corrected grid at its next rotation, never rewrite the 2026 puzzle. */
+var P=( !CU_PRACTICE && PUZZLE_DAY>=PUZZLES.length && PUZZLE_DAY%PUZZLES.length===281 )
+  ? REVISED_DAILY_0282 : PUZZLES[PUZZLE_DAY % PUZZLES.length];
 var SAVE_KEY=CU_PRACTICE ? "cu:"+P.id : "cu:daily:"+PUZZLE_DAY;
 var N=P.size;
 
@@ -1058,7 +1063,7 @@ var blocked=[], letters=[], locked=[], pencilled=[], nums=[], entries=P.entries;
   for(var i=0;i<entries.length;i++){
     var e=entries[i];
     e.num=nums[e.r][e.c];
-    var v=CLUES[e.a]; e.clue = v[dayIndex() % v.length];
+    var v=CLUES[e.a]; e.clue=e.clue || v[dayIndex() % v.length];
     e.cells=[];
     for(var k=0;k<e.a.length;k++)
       e.cells.push(e.dir==="A"?[e.r,e.c+k]:[e.r+k,e.c]);
@@ -1171,6 +1176,7 @@ function advance(step){
 }
 var difficultyFilter="all";
 function currentDifficulty(e){
+  if(e.difficulty)return e.difficulty;
   var a=CLUE_DIFFICULTY[e.a]||["medium"];
   return a[dayIndex()%a.length]||"medium";
 }
@@ -1223,7 +1229,7 @@ function draw(){
   if(clueEl.textContent!==e.clue)clueEl.textContent=e.clue;
   var enuEl=document.getElementById("enu"),enumLabel="("+e.a.length+")";
   if(enuEl.textContent!==enumLabel)enuEl.textContent=enumLabel;
-  var di=(CLUE_DIFFICULTY[e.a]&&CLUE_DIFFICULTY[e.a][dayIndex()%CLUE_DIFFICULTY[e.a].length])||"medium";
+  var di=currentDifficulty(e);
   var db=document.getElementById("difficulty");
   if(db.textContent!==di)db.textContent=di;
   db.className="difficulty "+di;
