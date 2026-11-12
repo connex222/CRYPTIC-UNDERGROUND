@@ -1155,6 +1155,7 @@ function idxIn(e,r,c){
   return 0;
 }
 function type(ch){
+  if(done){toast("Puzzle already complete");return;}
   var e=entries[cur],cell=e.cells[pos];
   if(locked[cell[0]][cell[1]]){advance(1);draw();return;}
   letters[cell[0]][cell[1]]=ch;pencilled[cell[0]][cell[1]]=pencilMode;
@@ -1162,6 +1163,7 @@ function type(ch){
   advance(1);save();draw();checkDone();
 }
 function backspace(){
+  if(done){toast("Puzzle already complete");return;}
   var e=entries[cur], cell=e.cells[pos];
   if(letters[cell[0]][cell[1]] && !locked[cell[0]][cell[1]]) {letters[cell[0]][cell[1]]="";pencilled[cell[0]][cell[1]]=false;}
   else { advance(-1); cell=entries[cur].cells[pos];
@@ -1274,6 +1276,7 @@ var CU_VERIFIED_HINTS={
  "ADULT|Mature: dual time revised":"Anagram: add T (time) to DUAL and rearrange using 'revised'."
 };
 document.getElementById("bHint").addEventListener("click",function(){
+  if(done){toast("Puzzle already complete");return;}
   var e=entries[cur];
   if(hintStep===0){
     guideUsed++;save();hintStep=1;
@@ -1300,6 +1303,7 @@ document.getElementById("bHint").addEventListener("click",function(){
   draw();
 });
 document.getElementById("bReveal").addEventListener("click", function(){
+  if(done){toast("Puzzle already complete");return;}
   var e=entries[cur];
   if(e.cells.every(function(cell,k){return letters[cell[0]][cell[1]]===e.a[k]&&!pencilled[cell[0]][cell[1]];})){toast("Word already solved");return;}
   if(!window.confirm("Reveal this entire word? It will be counted as help."))return;
@@ -1326,6 +1330,19 @@ document.getElementById("bClose").addEventListener("click", function(){
   document.getElementById("banner").setAttribute("aria-hidden","true");
   document.getElementById("banner").inert=true;
   var here=entries[cur].cells[pos];cellEls[here[0]][here[1]].focus();
+});
+document.addEventListener("keydown",function(ev){
+  var banner=document.getElementById("banner");
+  if(!banner.classList.contains("up"))return;
+  if(ev.key==="Escape"){
+    ev.preventDefault();document.getElementById("bClose").click();return;
+  }
+  if(ev.key==="Tab"){
+    var controls=Array.prototype.filter.call(banner.querySelectorAll("button"),function(b){return !b.disabled;});
+    if(!controls.length)return;
+    if(ev.shiftKey && document.activeElement===controls[0]){ev.preventDefault();controls[controls.length-1].focus();}
+    else if(!ev.shiftKey && document.activeElement===controls[controls.length-1]){ev.preventDefault();controls[0].focus();}
+  }
 });
 
 /* ---------- difficulty navigation ---------- */
@@ -1436,6 +1453,7 @@ document.getElementById("bShare").addEventListener("click",function(){
       var cl=document.createElement("button");
       cl.className="key wide"; cl.textContent="CLEAR";
       cl.addEventListener("click", function(){
+        if(done){toast("Puzzle already complete");return;}
         var e=entries[cur];
         for(var k=0;k<e.cells.length;k++){
           var r=e.cells[k][0], c=e.cells[k][1];
