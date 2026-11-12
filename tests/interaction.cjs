@@ -3,8 +3,8 @@ function runInteraction(html){
  const ok=(x,m)=>{if(!x)throw Error("Interaction QA failed: "+m);};
  const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(x=>x[1]);ok(scripts.length===3,"script count");
  const storage=new Map();let checks=0;
- function open(hash){
-  let doc,now="2026-11-12T13:59:00Z",reloads=0,promptText="";
+ function open(hash,dateOverride){
+  let doc,now=dateOverride||"2026-11-12T13:59:00Z",reloads=0,promptText="";
   class Node {
    constructor(tag="div",id=""){
     this.tagName=tag.toUpperCase();this.id=id;this.className="";this.style={};this.dataset={};
@@ -114,7 +114,21 @@ function runInteraction(html){
  for(let i=0;i<p.entries.length;i++)for(let k=0;k<p.entries[i].cells.length;k++){p.select(i,k);p.type(p.entries[i].a[k]);}
  ok(p.current().done,"practice completes");checks++;
  ok(storage.get("cu:streak")===oldStreak&&storage.get("cu:lastDay")===oldDay,"practice does not change daily streak");checks++;
- return {result:"PASS simulated daily and practice games",checks,daily:a.api.P.id,practice:p.P.id,screenReader:"ARIA attributes inspected in mock; physical assistive technology pending"};
+ const archived=open("","2026-10-09T12:00:00Z");
+ ok(archived.api.P.id==="cu-0282"&&archived.api.entries.length===4,"2026 historic crossword remains unchanged");checks++;
+ archived.api.select(0,0);archived.api.type(archived.api.entries[0].a[0]);
+ const oldProgress=storage.get("cu:daily:281");
+ ok(!!oldProgress,"historic progress written to its own day");checks++;
+ const revised=open("","2027-11-21T12:00:00Z");
+ ok(revised.api.P.id==="cu-0282-r2"&&revised.api.entries.length===14,"2027 corrected crossword loaded");checks++;
+ ok(revised.api.entries.every(x=>x.clue&&x.difficulty),"authored revision clues and grades preserved");checks++;
+ for(let i=0;i<revised.api.entries.length;i++)for(let k=0;k<revised.api.entries[i].cells.length;k++){
+  revised.api.select(i,k);revised.api.type(revised.api.entries[i].a[k]);
+ }
+ ok(revised.api.current().done,"future crossword completes");checks++;
+ ok(storage.get("cu:daily:281")===oldProgress,"future revision does not overwrite past progress");checks++;
+ ok(storage.get("cu:done:daily:689")==="1","future revision has independent completion record");checks++;
+ return {result:"PASS simulated daily, practice and future-cycle repair",checks,daily:a.api.P.id,practice:p.P.id,revised:revised.api.P.id,screenReader:"ARIA attributes inspected in mock; physical assistive technology pending"};
 }
 if(typeof module!=="undefined"&&module.exports){module.exports={runInteraction};if(require.main===module){
  const fs=require("node:fs"),path=require("node:path"),html=fs.readFileSync(path.resolve(__dirname,"..","index.html"),"utf8");
