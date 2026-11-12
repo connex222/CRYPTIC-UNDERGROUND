@@ -117,10 +117,19 @@ async function main(){
   const result=await solveUsingUI(primary.page);
   await primary.page.addInitScript(()=>{Object.defineProperty(navigator,"clipboard",{configurable:true,value:{writeText:async text=>{window.__sharedResult=text;}}});});
   await primary.page.evaluate(()=>{Object.defineProperty(navigator,"clipboard",{configurable:true,value:{writeText:async text=>{window.__sharedResult=text;}}});});
+  await primary.page.locator("#bClose").focus();
+  await primary.page.keyboard.press("Tab");
+  check(await primary.page.evaluate(()=>document.activeElement?.id==="bShare"),"completed-dialog Tab stays inside modal");
   await primary.page.locator("#bShare").click();
   const shared=await primary.page.evaluate(()=>window.__sharedResult);
   check(shared&&shared.includes("No spoilers.")&&!shared.includes("Across")&&!shared.includes("Down"),"shared result omits clues");
   await primary.page.screenshot({path:path.join(shots,"mobile-completion.png"),fullPage:true});
+  const solvedState=await primary.page.evaluate(()=>JSON.stringify(letters));
+  await primary.page.locator("#bClose").click();
+  await primary.page.keyboard.press("Backspace");
+  await primary.page.locator(".key.wide").filter({hasText:"CLEAR"}).click();
+  await primary.page.locator("#bReveal").click();
+  check(await primary.page.evaluate(()=>JSON.stringify(letters))===solvedState,"completed grid resists backspace, clear and reveal");
   await primary.context.close();
   for(const [w,h,description] of [[320,650,"Small phone 320"],[768,1024,"Tablet 768"],[1280,800,"Desktop 1280"]]){
    const sample=await open(w,h,"2026-11-12T14:00:00Z","");
