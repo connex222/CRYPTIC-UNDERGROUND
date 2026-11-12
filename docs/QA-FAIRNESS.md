@@ -2,11 +2,12 @@
 
 **Review date:** 12 November 2026  
 **Repository:** `connex222/CRYPTIC-UNDERGROUND`  
-**Branch:** `improvement/cryptic-underground-fairness`  
-**Pull request:** [Draft PR #2](https://github.com/connex222/CRYPTIC-UNDERGROUND/pull/2)  
-**Latest tested code commit:** `ef346d675b6e35b439f4962c9ac3f035d2c09965`  
-**GitHub Actions evidence:** [Successful full run 43246014985](https://github.com/connex222/CRYPTIC-UNDERGROUND/actions/runs/43246014985)  
-**Release status:** **Not merged or deployed.**
+**Release branch:** `main` (squash-merged from `improvement/cryptic-underground-fairness`)  
+**Pull request:** [Merged PR #2](https://github.com/connex222/CRYPTIC-UNDERGROUND/pull/2)  
+**Release commit:** `1752d8a5deb6fb082b6cc866433abe0d3badfff9`  
+**Final pre-merge tests:** [Successful run 43246582924](https://github.com/connex222/CRYPTIC-UNDERGROUND/actions/runs/43246582924)  
+**Production deployment:** [GitHub Pages build 43247364895 — successful](https://github.com/connex222/CRYPTIC-UNDERGROUND/actions/runs/43247364895)  
+**Release status:** **Merged and deployed via GitHub Pages on 12 November 2026; device and editorial follow-ups remain open.**
 
 ## Confirmed changes
 
@@ -42,7 +43,7 @@
 | `tests/editorial-review.cjs` | PASS (report generation) | Machine-readable list of residual unchecked-grid candidates; does not silently rewrite clues |
 | `tests/browser.cjs` | **PASS — 54 Chromium assertions** | Real browser launch, no external runtime requests, four viewport layouts, clue control focus, staged hints, pencil, reload, reference and results focus, sharing, immutable completion, historical and future full solves |
 | Browser screenshots | Uploaded as Actions artifact | Evidence images for small-screen completion and desktop presentation |
-| CI | **Both jobs passed** | GitHub-hosted Node 22 logic QA and real headless Chromium QA; no publish or deploy steps |
+| CI | **Both jobs passed** | GitHub-hosted Node 22 logic QA and real headless Chromium QA; that QA workflow does not itself publish or deploy (GitHub Pages separately deployed the approved `main` merge) |
 
 The CI is implemented at `.github/workflows/cryptic-fairness.yml`. Run the dependency-free suites with:
 
@@ -64,6 +65,10 @@ The Chromium browser suite is deliberately a **test-only development dependency*
 
 **Future-answer secrecy cannot be guaranteed while fully offline.** Every future puzzle solution ships inside the standalone HTML. Deterministic daily selection and date-scoped saving are enforced, but client-side encryption/obfuscation without a secret delivered later does not prevent inspection. A truly secret daily release requires a separately approved content-delivery design.
 
-## Release gate
+## Release and outstanding acceptance
 
-**Keep PR #2 in draft. No merge, deployment, release tag or production hosting change without explicit approval.** Re-run both CI jobs and obtain physical accessibility/editorial sign-off before release.
+**The owner explicitly authorised merge and deployment on 12 November 2026.** PR #2 was squash-merged into `main`; its GitHub Pages deployment reported success. The two automated QA jobs passed at the final branch head. The app source remains offline-capable.
+
+The release does **not** certify every clue as professionally proofread or assert that physical NVDA, VoiceOver and TalkBack testing has been performed. These remain documented follow-ups, not hidden or waived findings.
+
+For a subsequent release, preserve existing progress; run the Node and Chromium checks and record any new editorial exceptions before merging.
