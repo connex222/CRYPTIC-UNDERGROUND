@@ -58,7 +58,7 @@ function runInteraction(html){
   const win={innerWidth:390,innerHeight:844,events:{},addEventListener(k,f){(this.events[k]||(this.events[k]=[])).push(f);},dispatch(k){for(const f of this.events[k]||[])f();},prompt(t,v){promptText=v;},confirm(){return false;},open(){}};
   class MutationObserver {constructor(f){this.f=f;}observe(el){el._watch.push(this.f);}}
   const computed=el=>({position:["banner","toast","reference"].includes(el.id)?"fixed":"static",display:"block",paddingTop:"8px",paddingBottom:"8px"});
-  const returned="\nreturn {P,entries,letters,pencilled,locked,cellEls,PUZZLE_DAY,CU_PRACTICE,dayIndex,type,tapCell,checkDone, current(){return {cur,pos,hintsUsed,guideUsed,revealed,done};},select(i,k){cur=i;pos=k;hintStep=0;hideHint();draw();}};";
+  const returned="\nreturn {P,entries,letters,pencilled,locked,cellEls,PUZZLE_DAY,CU_PRACTICE,dayIndex,type,backspace,tapCell,checkDone, current(){return {cur,pos,hintsUsed,guideUsed,revealed,done};},select(i,k){cur=i;pos=k;hintStep=0;hideHint();draw();}};";
   let counter=0;
   const api=(new Function("document","window","location","localStorage","navigator","Date","setTimeout","clearTimeout","MutationObserver","getComputedStyle",scripts.join("\n")+returned))
      (doc,win,location,localStorage,{},Clock,()=>++counter,()=>{},MutationObserver,computed);
@@ -104,6 +104,13 @@ function runInteraction(html){
  ok(api.current().done&&el("banner").classList.contains("up"),"complete crossword run");checks++;
  ok(storage.get("cu:done:daily:"+api.PUZZLE_DAY)==="1","day completion stored");checks++;
  el("bShare").click();ok(a.getPrompt().includes("No spoilers.")&&!a.getPrompt().includes("Across"),"share no answers");checks++;
+ const completedLetters=JSON.stringify(api.letters),finalStats=api.current();
+ el("bClose").click();
+ api.type("Z");api.backspace();el("bHint").click();el("bReveal").click();
+ const clear=el("keys").children.flatMap(x=>x.children).find(x=>x.textContent==="CLEAR");
+ ok(!!clear,"clear control exists");clear.click();
+ ok(JSON.stringify(api.letters)===completedLetters,"finished grid cannot be changed by keyboard, hint, reveal or Clear");checks++;
+ ok(api.current().revealed===finalStats.revealed&&api.current().hintsUsed===finalStats.hintsUsed,"completed results are immutable");checks++;
  el("bClose").click();const ev={key:"Tab",target:a.body,prevented:false,preventDefault(){this.prevented=true;}};
  a.doc.dispatch("keydown",ev);ok(!ev.prevented,"keyboard Tab not trapped");checks++;
  a.setNow("2026-11-13T09:00:00Z");a.win.dispatch("focus");ok(a.getReloads()===1,"date rollover refresh");checks++;
