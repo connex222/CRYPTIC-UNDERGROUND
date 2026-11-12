@@ -1299,7 +1299,7 @@ document.getElementById("next").addEventListener("click", function(){ hop(1); })
 document.getElementById("bClose").addEventListener("click", function(){
   document.getElementById("banner").classList.remove("up");
   document.getElementById("banner").setAttribute("aria-hidden","true");
-  document.getElementById("bClose").focus();
+  var here=entries[cur].cells[pos];cellEls[here[0]][here[1]].focus();
 });
 
 /* ---------- difficulty navigation ---------- */
@@ -1324,12 +1324,23 @@ document.getElementById("bWhatsApp").addEventListener("click", function(){
 });
 
 /* ---------- cryptic reference ---------- */
-function openReference(){ var m=document.getElementById("reference"); m.classList.add("open"); m.setAttribute("aria-hidden","false"); document.getElementById("referenceClose").focus(); }
-function closeReference(){ var m=document.getElementById("reference"); m.classList.remove("open"); m.setAttribute("aria-hidden","true"); }
+var cuRefOpener=null;
+function openReference(){cuRefOpener=document.activeElement;var m=document.getElementById("reference");m.classList.add("open");m.setAttribute("aria-hidden","false");document.getElementById("referenceClose").focus();}
+function closeReference(){var m=document.getElementById("reference");if(!m.classList.contains("open"))return;m.classList.remove("open");m.setAttribute("aria-hidden","true");if(cuRefOpener&&cuRefOpener.focus)cuRefOpener.focus();}
 document.getElementById("bReference").addEventListener("click",openReference);
 document.getElementById("referenceClose").addEventListener("click",closeReference);
 document.getElementById("referenceBackdrop").addEventListener("click",closeReference);
-document.addEventListener("keydown",function(ev){ if(ev.key==="Escape") closeReference(); });
+document.addEventListener("keydown",function(ev){
+  var panel=document.getElementById("reference");
+  if(!panel.classList.contains("open"))return;
+  if(ev.key==="Escape"){ev.preventDefault();closeReference();return;}
+  if(ev.key==="Tab"){
+    var nodes=Array.prototype.filter.call(panel.querySelectorAll("button,[href],[tabindex]"),function(x){return !x.disabled&&x.tabIndex>=0;});
+    if(!nodes.length)return;
+    if(ev.shiftKey&&document.activeElement===nodes[0]){ev.preventDefault();nodes[nodes.length-1].focus();}
+    else if(!ev.shiftKey&&document.activeElement===nodes[nodes.length-1]){ev.preventDefault();nodes[0].focus();}
+  }
+});
 
 /* ---------- streak ---------- */
 function recordStreak(){
@@ -1372,10 +1383,11 @@ function checkDone(){
   if(run>1) document.getElementById("bannerMsg").textContent += "  " + run + " days running.";
   document.getElementById("banner").classList.add("up");
   document.getElementById("banner").setAttribute("aria-hidden","false");
+  document.getElementById("bShare").focus();
   put(CU_PRACTICE?"cu:done:"+P.id:"cu:done:daily:"+PUZZLE_DAY,"1");
 }
 document.getElementById("bShare").addEventListener("click",function(){
-  var today=new Date(),date=today.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
+  var date=new Date(EPOCH+PUZZLE_DAY*86400000).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"});
   var msg="Cryptic Underground — "+(CU_PRACTICE?"Practice":date)+"\n"+
     N+"×"+N+" completed "+(hintsUsed===0&&revealed===0?"unaided":"with help")+
     "\nLetters given: "+hintsUsed+" | Words revealed: "+revealed+"\nNo spoilers.";
@@ -1417,12 +1429,29 @@ document.getElementById("bShare").addEventListener("click",function(){
     wrap.appendChild(d);
   });
 })();
-document.addEventListener("keydown", function(ev){
-  if(/^[a-zA-Z]$/.test(ev.key)) type(ev.key.toUpperCase());
-  else if(ev.key==="Backspace"){ ev.preventDefault(); backspace(); }
-  else if(ev.key==="ArrowRight"||ev.key==="ArrowDown") advance(1), draw();
-  else if(ev.key==="ArrowLeft"||ev.key==="ArrowUp") advance(-1), draw();
-  else if(ev.key==="Tab"){ ev.preventDefault(); hop(ev.shiftKey?-1:1); }
+
+function cuArrow(dir,step){
+  var here=entries[cur].cells[pos],found=entryAt(here[0],here[1],dir);
+  if(found<0){toast("No "+(dir==="A"?"across":"down")+" entry at this square");return;}
+  if(found!==cur){cur=found;hintStep=0;hideHint();}
+  var i=idxIn(entries[cur],here[0],here[1]);
+  pos=Math.max(0,Math.min(entries[cur].cells.length-1,i+step));
+  draw();
+  var cell=entries[cur].cells[pos];
+  if(document.activeElement&&document.activeElement.classList.contains("cell"))
+    cellEls[cell[0]][cell[1]].focus();
+}
+document.addEventListener("keydown",function(ev){
+  if(ev.ctrlKey||ev.altKey||ev.metaKey)return;
+  if(document.getElementById("reference").classList.contains("open")||
+     document.getElementById("banner").classList.contains("up"))return;
+  if(ev.target.closest&&ev.target.closest("button,input,textarea,select"))return;
+  if(/^[a-zA-Z]$/.test(ev.key)){ev.preventDefault();type(ev.key.toUpperCase());}
+  else if(ev.key==="Backspace"){ev.preventDefault();backspace();}
+  else if(ev.key==="ArrowRight"){ev.preventDefault();cuArrow("A",1);}
+  else if(ev.key==="ArrowLeft"){ev.preventDefault();cuArrow("A",-1);}
+  else if(ev.key==="ArrowDown"){ev.preventDefault();cuArrow("D",1);}
+  else if(ev.key==="ArrowUp"){ev.preventDefault();cuArrow("D",-1);}
 });
 
 /* ---------- go ---------- */
@@ -1435,6 +1464,10 @@ document.getElementById("rbar").setAttribute("fill", P.colour);
 draw();
 showStreak();
 checkDone();
+// Resuming after midnight must not leave an old daily active.
+function cuCheckDate(){if(!CU_PRACTICE && dayIndex()!==PUZZLE_DAY)location.reload();}
+window.addEventListener("focus",cuCheckDate);
+document.addEventListener("visibilitychange",function(){if(!document.hidden)cuCheckDate();});
 </script>
 <script>
 /* ---------- practice mode UI (V9 add-on) ---------- */
