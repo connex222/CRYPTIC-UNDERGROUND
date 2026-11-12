@@ -38,3 +38,12 @@ Cryptic Underground is a daily mini cryptic crossword, aimed at Unpick players a
 - Never delete files to tidy up; move old notes into `docs/` instead.
 - Never force-push, rewrite history or rename the repository.
 - Before saying a change is finished, check the file opens with no errors in the browser console.
+
+## Fairness branch and QA safeguards (November 2026)
+
+- Historical puzzles must remain stable. The original `cu-0282` stays on its first date (9 October 2026); its future 21 November 2027 recurrence uses the independently authored `cu-0282-r2` grid. Never change an already served daily without an explicit migration decision.
+- Absolute-day saves use `cu:daily:<index>`. Keep compatibility with the older `cu:<puzzle-id>` local-storage keys on the first rotation. Practice must not change daily streaks.
+- Before proposing changes, run `node tests/fairness.cjs`, `node tests/interaction.cjs`, `node tests/rotation.cjs` and `node tests/revised-daily.cjs`. Read `docs/CORRECTION-LEDGER.md` and `docs/GRID-EDITORIAL-REVIEW.md` for the editorial rationale.
+- GitHub Actions runs the above checks and a real Chromium browser suite. The browser test dependency is CI-only and must never be added to the standalone offline HTML.
+- No single automated script can certify every cryptic definition, pronunciation or alternative answer; retain a human-review register for uncertain clues rather than inventing a parse.
+- Draft PR #2 must **not be merged or deployed** until the owner explicitly approves. Physical VoiceOver/TalkBack/NVDA acceptance is outstanding.
