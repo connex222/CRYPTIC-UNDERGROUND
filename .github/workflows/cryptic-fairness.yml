@@ -30,6 +30,8 @@ jobs:
         run: node tests/interaction.cjs
       - name: Daily rotation, calendar and UK daylight-saving boundaries
         run: node tests/rotation.cjs
+      - name: Edited-clue proof checks and the improved future grid
+        run: node tests/revised-daily.cjs
       - name: Editorial exception triage
         run: node tests/editorial-review.cjs > editorial-review.json
       - name: Attach editorial review evidence
