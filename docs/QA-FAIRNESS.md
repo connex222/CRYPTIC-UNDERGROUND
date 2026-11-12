@@ -59,3 +59,16 @@ node tests/interaction.cjs
 All future grids and answers remain bundled in the offline `index.html`. This guarantees no-network play and deterministic rotation but cannot guarantee future-answer secrecy against inspection. True secrecy would need a staged delivery model, contrary to the existing offline requirement. No such architectural change is part of this branch.
 
 **No merges, live GitHub Pages changes, Render deployments or release tags have been performed as part of this review.**
+
+
+## Phase 2: automated GitHub QA and expanded editorial coverage
+
+- Added `tests/editorial-review.cjs`, generating a non-destructive JSON register of confirmed palindrome errors, duplicate clue text shared between answers, high-unchecked grids and selected dubious hard ratings.
+- Added `tests/rotation.cjs`, checking 408-day rotation, deterministic puzzle identity, persistent date-scoped keys and UK local date transitions including spring/autumn daylight-saving changes.
+- Added `docs/GRID-EDITORIAL-REVIEW.md` documenting all **60** high-unchecked grids, including `cu-0282` (four clues; 16 of 19 cells unchecked).
+- Added `.github/workflows/cryptic-fairness.yml`. This is **test-only**, runs on pull requests and manual request, and uploads an editorial-review JSON artifact. It does not publish the game.
+- A GitHub-hosted Node 22 run completed successfully on this development branch: [Actions run 43239102263](https://github.com/connex222/CRYPTIC-UNDERGROUND/actions/runs/43239102263). All fairness, interaction, rotation, editorial triage and artifact-upload steps passed.
+- Editorial triage does **not** certify the corpus. Three confirmed false-palindrome clues and the 60 crossing-density review candidates remain unresolved. No automatic rewrites were made.
+
+**Remaining acceptance gate:** screen-reader and small-screen verification on actual browsers/devices, plus editorial sign-off. Running the tests through GitHub is not a substitute for these checks.
+
