@@ -28,6 +28,8 @@ jobs:
         run: node tests/fairness.cjs
       - name: Simulated complete daily and practice runs
         run: node tests/interaction.cjs
+      - name: Daily rotation, calendar and UK daylight-saving boundaries
+        run: node tests/rotation.cjs
       - name: Editorial exception triage
         run: node tests/editorial-review.cjs > editorial-review.json
       - name: Attach editorial review evidence
