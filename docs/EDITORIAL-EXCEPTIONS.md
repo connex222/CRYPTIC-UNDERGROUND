@@ -1,7 +1,7 @@
 # Cryptic Underground — editorial exception register
 Branch: `improvement/cryptic-underground-fairness`  
 Review date: 12 November 2026  
-Status: **human editorial decisions required; no clue corpus rewritten.**
+Status: **Original audit retained for traceability; 16 malformed or under-specified variants have since been corrected on this branch.** See [correction ledger](CORRECTION-LEDGER.md). Remaining items require human editorial judgement.
 
 ## Corpus audit
 
@@ -11,19 +11,19 @@ Status: **human editorial decisions required; no clue corpus rewritten.**
 - Structural correctness is **not** proof that every variant's wordplay and definition are fair. UK pronunciations, surface grammar, abbreviations and cryptic definitions need trained human review.
 - Answer strings contain letters A–Z only; answers are displayed with enumeration equal to string length, so any intended hyphenated or multiple-word phrase would need separate review.
 
-## Confirmed P0 wordplay errors — preserve pending approval
+## Original P0 wordplay errors — corrected in development branch
 
 | Answer | Exact clue | Rating | Problem | Decision |
 |---|---|---|---|---|
-| NOUN | Name, either way | hard | NOUN reversed is NUON, not NOUN. Claimed palindrome fails. | Review/remove or explicitly replace |
-| RACER | Runner either way | hard | RACER reversed is RECAR, not RACER. Claimed palindrome fails. | Review/remove or explicitly replace |
-| WEE | Small, either way | hard | WEE reversed is EEW, not WEE. Claimed palindrome fails. | Review/remove or explicitly replace |
+| NOUN | Name, either way | hard | NOUN reversed is NUON, not NOUN. Claimed palindrome fails. | Replaced with NO + UN charade; grade medium |
+| RACER | Runner either way | hard | RACER reversed is RECAR, not RACER. Claimed palindrome fails. | Replaced with RACE + R charade; grade easy |
+| WEE | Small, either way | hard | WEE reversed is EEW, not WEE. Claimed palindrome fails. | Replaced with W + E + E charade; grade medium |
 
-The reproducible audit checks every clue containing “either way” or “both ways”; all other such claim/answer pairs currently pass the palindrome condition.
+The reproducible audit now identifies **zero false palindrome claims** in the revised clue corpus.
 
-## Difficulty / definition-only candidates — human review
+## Original definition-only and difficulty candidates — corrected
 
-These are **flags**, not automatic corrections. Some cryptic definitions are acceptable, but rating must reflect actual construction, not a word's apparent obscurity.
+These were flagged before the corrections. All eleven variants have now been replaced with explicit wordplay or defensible double definitions, with aligned difficulty ratings. The table below records the original weaknesses; see the [correction ledger](CORRECTION-LEDGER.md) for the replacements and exact letter proofs.
 
 | Answer | Exact clue | Rating | Review question |
 |---|---|---|---|
@@ -58,11 +58,11 @@ These ten examples were checked letter by letter. The existing app's Stage 2 aut
 
 ## Editorial process
 
-1. Review the three **confirmed failures** before considering a merge. Do not change their answer keys or crossings: any fix must preserve the grid answer exactly, or require puzzle-level review.
-2. Review the eleven **difficulty / definition** candidates. Accept and document deliberate cryptic definitions where defensible; otherwise approve a replacement variant and updated difficulty rating.
+1. **Completed:** replace the three false-palindrome clues, retaining their answer keys and crossings; regression tests assert their new parsings.
+2. **Completed:** replace all eleven direct-definition/difficulty candidates with explicit wordplay or double definitions and updated ratings.
 3. Sample remaining variants systematically by clue type and difficulty. In particular, individually assess all homophones for UK pronunciation and all abbreviations for recognised cryptic usage.
 4. Record the adjudication and parsing for every approved change; preserve clue/difficulty index alignment.
-5. Re-run `node tests/fairness.test.cjs` after any change.
+5. Re-run `node tests/fairness.cjs`, `node tests/revised-daily.cjs` and the Chromium browser suite after any change.
 
 ## Future-answer secrecy limitation
 
@@ -70,7 +70,7 @@ The application is a **single offline HTML file containing all 408 daily grids a
 
 ## Verification limits
 
-Static inspection and simulated solving checks do not replace real NVDA/VoiceOver/TalkBack or physical iPhone/Android small-screen testing. No browser/device acceptance run is claimed. No merge or deployment is authorised by this report.
+Automated GitHub Actions Node and headless Chromium tests have run, including mobile viewport simulation and complete puzzles. These do not replace real NVDA/VoiceOver/TalkBack or physical iPhone/Android testing. No merge or deployment is authorised by this report.
 
 ## Phase 2 — crossing-density and duplicate-clue audit
 
@@ -83,4 +83,4 @@ The separate [grid editorial register](GRID-EDITORIAL-REVIEW.md) lists **all 60 
 - No entry was found starting or ending inside a longer contiguous white run.
 - [The reproducible non-destructive audit](../tests/editorial-review.cjs) emits the complete flagged list in JSON for human review.
 
-**Decision held:** retain authored grids and clue variants unchanged pending approval. The three confirmed false-palindrome examples and the eleven difficulty/definition candidates above remain unresolved.
+**Updated decision:** the three false-palindrome and eleven direct-definition/difficulty variants are fixed, plus the APPAREL and AROUSED construction errors. The original cu-0282 is preserved historically; cu-0282-r2 is scheduled for future recurrences, reducing unchecked squares from 84.2% to 20.5%. The other 59 high-unchecked grids remain editorial-review candidates, not confirmed defects. No merge or deployment has occurred.
