@@ -71,3 +71,16 @@ The application is a **single offline HTML file containing all 408 daily grids a
 ## Verification limits
 
 Static inspection and simulated solving checks do not replace real NVDA/VoiceOver/TalkBack or physical iPhone/Android small-screen testing. No browser/device acceptance run is claimed. No merge or deployment is authorised by this report.
+
+## Phase 2 — crossing-density and duplicate-clue audit
+
+The separate [grid editorial register](GRID-EDITORIAL-REVIEW.md) lists **all 60 puzzles with 40% or more unchecked squares**. The most serious candidate is `cu-0282` (84.2% unchecked, just four entries), which needs a puzzle-level editorial decision rather than an automatic replacement.
+
+- 350 of 458 puzzles have at least one unchecked square, which is not necessarily an error.
+- Across the collection, 2,576 of 11,659 playable squares are unchecked (22.1%).
+- 60 puzzles reach or exceed 40% unchecked; 1 exceeds 50%.
+- No exact duplicated clue strings were found across *different* answer keys.
+- No entry was found starting or ending inside a longer contiguous white run.
+- [The reproducible non-destructive audit](../tests/editorial-review.cjs) emits the complete flagged list in JSON for human review.
+
+**Decision held:** retain authored grids and clue variants unchanged pending approval. The three confirmed false-palindrome examples and the eleven difficulty/definition candidates above remain unresolved.
