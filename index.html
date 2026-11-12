@@ -877,7 +877,7 @@ body{min-height:100%;height:auto}
 
 <div class="clueboard">
   <button class="step" id="prev" aria-label="Previous clue">‹</button>
-  <div class="cluetext">
+  <div class="cluetext" role="status" aria-live="polite" aria-atomic="true">
     <div class="ref" id="ref">—</div>
     <div class="body"><span id="clue">Tap a square to begin.</span> <span class="enu" id="enu"></span> <span class="difficulty" id="difficulty">—</span></div>
   </div>
@@ -1125,8 +1125,11 @@ function tapCell(r,c){
   var e=entries[cur], inCur=false, k;
   for(k=0;k<e.cells.length;k++) if(e.cells[k][0]===r&&e.cells[k][1]===c){ inCur=true; break; }
   if(inCur){
-    var other=entryAt(r,c, e.dir==="A"?"D":"A");
-    if(other>=0 && other!==cur){ cur=other; pos=idxIn(entries[cur],r,c); }
+    // Moving to another cell stays in the current direction. Only a second
+    // tap on the selected crossing square switches direction.
+    var active=e.cells[pos],same=active[0]===r&&active[1]===c;
+    var other=same?entryAt(r,c,e.dir==="A"?"D":"A"):-1;
+    if(other>=0&&other!==cur){cur=other;pos=idxIn(entries[cur],r,c);}
     else pos=k;
   }else{
     var a=entryAt(r,c,"A"), d=entryAt(r,c,"D");
@@ -1198,19 +1201,24 @@ function draw(){
     el.setAttribute("aria-label","Row "+(r+1)+", column "+(c+1)+
       (nums[r][c]?", clue "+nums[r][c]:"")+", "+(ch||"empty")+
       (pencilled[r][c]?", tentative":"")+(locked[r][c]?", given":"")+
-      (selected?", selected":""));
+      (selected?", selected, "+e.num+(e.dir==="A"?" Across":" Down"):""));
     el.setAttribute("aria-pressed",selected?"true":"false");
   }
   document.getElementById("bDirection").textContent="Direction: "+(e.dir==="A"?"Across":"Down");
   document.getElementById("bPencil").textContent="Pencil: "+(pencilMode?"On":"Off");
   document.getElementById("bPencil").setAttribute("aria-pressed",String(pencilMode));
   document.getElementById("bHint").textContent=hintStep===0?"Hint":hintStep===1?"Next hint":"Give one letter";
-  document.getElementById("ref").textContent =
-    e.num + (e.dir==="A"?" Across":" Down");
-  document.getElementById("clue").textContent = e.clue;
-  document.getElementById("enu").textContent = "("+e.a.length+")";
+  var refLabel=e.num+(e.dir==="A"?" Across":" Down");
+  var refEl=document.getElementById("ref");
+  if(refEl.textContent!==refLabel)refEl.textContent=refLabel;
+  var clueEl=document.getElementById("clue");
+  if(clueEl.textContent!==e.clue)clueEl.textContent=e.clue;
+  var enuEl=document.getElementById("enu"),enumLabel="("+e.a.length+")";
+  if(enuEl.textContent!==enumLabel)enuEl.textContent=enumLabel;
   var di=(CLUE_DIFFICULTY[e.a]&&CLUE_DIFFICULTY[e.a][dayIndex()%CLUE_DIFFICULTY[e.a].length])||"medium";
-  var db=document.getElementById("difficulty"); db.textContent=di; db.className="difficulty "+di;
+  var db=document.getElementById("difficulty");
+  if(db.textContent!==di)db.textContent=di;
+  db.className="difficulty "+di;
   var filled=0, total=0;
   for(r=0;r<N;r++) for(c=0;c<N;c++) if(!blocked[r][c]){ total++; if(letters[r][c]) filled++; }
   document.getElementById("rbar").setAttribute("width", String((100*filled/total).toFixed(2)));
