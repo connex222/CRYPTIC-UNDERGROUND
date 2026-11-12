@@ -1227,29 +1227,54 @@ function toast(msg){
   clearTimeout(t._h); t._h=setTimeout(function(){ t.classList.remove("up"); },1600);
 }
 document.getElementById("bCheck").addEventListener("click", function(){
-  var wrong=0, any=false;
+  var errors=Object.create(null),any=false;
   for(var i=0;i<entries.length;i++){
     var e=entries[i];
     for(var k=0;k<e.cells.length;k++){
       var r=e.cells[k][0], c=e.cells[k][1], ch=letters[r][c];
       if(!ch) continue; any=true;
-      if(ch!==e.a[k]){ cellEls[r][c].dataset.bad="1"; wrong++; }
+      if(ch!==e.a[k]){ cellEls[r][c].dataset.bad="1"; errors[r+","+c]=1; }
     }
   }
   draw();
-  toast(!any ? "Nothing to check yet" : wrong ? wrong+" letter"+(wrong>1?"s":"")+" off" : "All correct so far");
+  var wrong=Object.keys(errors).length;
+  toast(!any?"Nothing to check yet":wrong?wrong+" square"+(wrong===1?"":"s")+" incorrect":"All inked letters correct so far");
 });
-document.getElementById("bHint").addEventListener("click", function(){
-  var e=entries[cur], blanks=[];
-  for(var k=0;k<e.cells.length;k++){
-    var r=e.cells[k][0], c=e.cells[k][1];
-    if(letters[r][c]!==e.a[k]) blanks.push(k);
+
+function hideHint(){var p=document.getElementById("hintPanel");if(p){p.hidden=true;p.textContent="";}}
+function showHint(msg){var p=document.getElementById("hintPanel");p.textContent=msg;p.hidden=false;}
+var CU_VERIFIED_HINTS={
+ "ACID|Sour part of placid":"Hidden answer: ACID occurs consecutively in PLACID; 'part of' signals it.",
+ "ABIDE|Stand a bid, English":"Charade: A + BID + E (English), giving ABIDE; 'Stand' defines the answer.",
+ "BEET|Root heard to thrash":"Homophone: BEAT means thrash, and sounds like BEET, the root.",
+ "ALERT|Later, out — warning":"Anagram: LATER is rearranged ('out') into ALERT, a warning.",
+ "ADULT|Mature: dual time revised":"Anagram: DUAL + T (time), rearranged ('revised') into ADULT."
+};
+document.getElementById("bHint").addEventListener("click",function(){
+  var e=entries[cur];
+  if(hintStep===0){
+    hintStep=1;
+    showHint("Stage 1 — Look for a definition at either end. The answer has "+e.a.length+" letters. Search for an indicator before guessing.");
+  }else if(hintStep===1){
+    hintStep=2;
+    var known=0;
+    e.cells.forEach(function(cell){if(letters[cell[0]][cell[1]]&&!pencilled[cell[0]][cell[1]])known++;});
+    var note=CU_VERIFIED_HINTS[e.a+"|"+e.clue];
+    showHint("Stage 2 — "+(note||"Look for an anagram, hidden answer, charade, homophone or double definition. Check the exact letters and grammar.")+
+      " "+known+" of "+e.a.length+" squares have inked letters.");
+  }else{
+    var blanks=[];
+    for(var k=0;k<e.cells.length;k++){
+      var r=e.cells[k][0],c=e.cells[k][1];
+      if(letters[r][c]!==e.a[k]||pencilled[r][c])blanks.push(k);
+    }
+    if(!blanks.length){toast("This word is already correct");return;}
+    var k=blanks[0],r=e.cells[k][0],c=e.cells[k][1];
+    letters[r][c]=e.a[k];pencilled[r][c]=false;locked[r][c]=true;hintsUsed++;
+    hintStep=0;hideHint();clearMarks();save();toast("One letter given");
+    checkDone();
   }
-  if(!blanks.length){ toast("This one's already solved"); return; }
-  var k=blanks[0], r=e.cells[k][0], c=e.cells[k][1];
-  letters[r][c]=e.a[k]; locked[r][c]=true; hintsUsed++;
-  clearMarks(); save(); draw(); checkDone();
-  toast("One letter given");
+  draw();
 });
 document.getElementById("bReveal").addEventListener("click", function(){
   var e=entries[cur];
@@ -1260,10 +1285,21 @@ document.getElementById("bReveal").addEventListener("click", function(){
   revealed++; clearMarks(); save(); draw(); checkDone();
   toast(e.num+(e.dir==="A"?" Across":" Down")+" revealed");
 });
+
+document.getElementById("bDirection").addEventListener("click",function(){
+  var e=entries[cur],cell=e.cells[pos],other=entryAt(cell[0],cell[1],e.dir==="A"?"D":"A");
+  if(other<0){toast("No crossing direction at this square");return;}
+  cur=other;pos=idxIn(entries[cur],cell[0],cell[1]);hintStep=0;hideHint();draw();
+});
+document.getElementById("bPencil").addEventListener("click",function(){
+  pencilMode=!pencilMode;draw();toast(pencilMode?"Pencil on: entries tentative":"Pencil off: new entries use ink");
+});
 document.getElementById("prev").addEventListener("click", function(){ hop(-1); });
 document.getElementById("next").addEventListener("click", function(){ hop(1); });
 document.getElementById("bClose").addEventListener("click", function(){
   document.getElementById("banner").classList.remove("up");
+  document.getElementById("banner").setAttribute("aria-hidden","true");
+  document.getElementById("bClose").focus();
 });
 
 /* ---------- difficulty navigation ---------- */
@@ -1273,7 +1309,7 @@ document.querySelectorAll(".df-btn").forEach(function(btn){
     document.querySelectorAll(".df-btn").forEach(function(b){ b.classList.toggle("active",b===btn); });
     var list=matchingIndices();
     if(list.indexOf(cur)<0) cur=list[0];
-    pos=0; draw();
+    pos=0;hintStep=0;hideHint();draw();
     var label=difficultyFilter==="all" ? "All clue levels" : difficultyFilter.charAt(0).toUpperCase()+difficultyFilter.slice(1)+" clues";
     toast(label);
   });
@@ -1297,6 +1333,7 @@ document.addEventListener("keydown",function(ev){ if(ev.key==="Escape") closeRef
 
 /* ---------- streak ---------- */
 function recordStreak(){
+  if(CU_PRACTICE)return currentStreak();
   var today = dayIndex();
   var last = parseInt(get("cu:lastDay")||"-99",10);
   var run  = parseInt(get("cu:streak")||"0",10);
@@ -1334,8 +1371,18 @@ function checkDone(){
     : "Finished with "+hintsUsed+" letter"+(hintsUsed===1?"":"s")+" and "+revealed+" answer"+(revealed===1?"":"s")+" given.";
   if(run>1) document.getElementById("bannerMsg").textContent += "  " + run + " days running.";
   document.getElementById("banner").classList.add("up");
-  put("cu:done:"+P.id,"1");
+  document.getElementById("banner").setAttribute("aria-hidden","false");
+  put(CU_PRACTICE?"cu:done:"+P.id:"cu:done:daily:"+PUZZLE_DAY,"1");
 }
+document.getElementById("bShare").addEventListener("click",function(){
+  var today=new Date(),date=today.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
+  var msg="Cryptic Underground — "+(CU_PRACTICE?"Practice":date)+"\n"+
+    N+"×"+N+" completed "+(hintsUsed===0&&revealed===0?"unaided":"with help")+
+    "\nLetters given: "+hintsUsed+" | Words revealed: "+revealed+"\nNo spoilers.";
+  if(navigator.clipboard&&navigator.clipboard.writeText)
+    navigator.clipboard.writeText(msg).then(function(){toast("Spoiler-free result copied");},function(){window.prompt("Copy your result",msg);});
+  else window.prompt("Copy your result",msg);
+});
 
 /* ---------- keyboard ---------- */
 (function buildKeys(){
