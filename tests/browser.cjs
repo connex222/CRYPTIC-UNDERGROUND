@@ -117,11 +117,17 @@ async function main(){
   const result=await solveUsingUI(primary.page);
   await primary.page.addInitScript(()=>{Object.defineProperty(navigator,"clipboard",{configurable:true,value:{writeText:async text=>{window.__sharedResult=text;}}});});
   await primary.page.evaluate(()=>{Object.defineProperty(navigator,"clipboard",{configurable:true,value:{writeText:async text=>{window.__sharedResult=text;}}});});
-  await primary.page.locator("#bClose").focus();
-  const beforeFocus=await primary.page.evaluate(()=>({active:document.activeElement?.id,opened:document.getElementById("banner").className,inert:document.getElementById("banner").inert,buttons:[...document.querySelectorAll("#banner button")].map(x=>x.id)}));
+  // Practice mode adds a third banner button after Back to grid.
+  // Trap from the actual last focusable button, not a hard-coded button ID.
+  await primary.page.locator("#banner button").last().focus();
   await primary.page.keyboard.press("Tab");
-  const afterFocus=await primary.page.evaluate(()=>({active:document.activeElement?.id,opened:document.getElementById("banner").className,inert:document.getElementById("banner").inert}));
-  check(afterFocus.active==="bShare","completed-dialog Tab stays inside modal: "+JSON.stringify({beforeFocus,afterFocus}));
+  check(await primary.page.evaluate(()=>document.activeElement===document.getElementById("bShare")),"final banner button wraps to first on Tab");
+  await primary.page.locator("#bShare").focus();
+  await primary.page.keyboard.press("Shift+Tab");
+  check(await primary.page.evaluate(()=>{
+    const buttons=[...document.querySelectorAll("#banner button")].filter(b=>!b.disabled);
+    return document.activeElement===buttons[buttons.length-1];
+  }),"first banner button wraps to last on Shift+Tab");
   await primary.page.locator("#bShare").click();
   const shared=await primary.page.evaluate(()=>window.__sharedResult);
   check(shared&&shared.includes("No spoilers.")&&!shared.includes("Across")&&!shared.includes("Down"),"shared result omits clues");
