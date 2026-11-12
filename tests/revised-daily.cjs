@@ -62,7 +62,8 @@ function validate(html){
   {answer:"TOMATO",clue:"Fruit from 'to', a floor covering and nothing",level:"medium",valid:"TO"+"MAT"+"O"==="TOMATO"},
   {answer:"IMAGINE",clue:"Picture myself with wise men in the north-east",level:"medium",valid:"I"+"MAGI"+"NE"==="IMAGINE"},
   {answer:"BERSERK",clue:"Mad: BREAKERS minus A, wildly",level:"hard",valid:sort("BREAKERS".replace("A",""))===sort("BERSERK")},
-  {answer:"APPAREL",clue:"Clothing made by mixing A PEARL with P",level:"medium",valid:sort("APEARLP")===sort("APPAREL")}
+  {answer:"APPAREL",clue:"Clothing made by mixing A PEARL with P",level:"medium",valid:sort("APEARLP")===sort("APPAREL")},
+  {answer:"AROUSED",clue:"Excited: an article followed by 'woken up'",level:"medium",valid:"A"+"ROUSED"==="AROUSED"}
  ];
  for(const e of edits){
   const pos=clues[e.answer].indexOf(e.clue);
