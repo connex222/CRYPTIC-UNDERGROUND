@@ -64,8 +64,16 @@ function runInteraction(html){
      (doc,win,location,localStorage,{},Clock,()=>++counter,()=>{},MutationObserver,computed);
   return {api,el,doc,body,win,location,setNow:v=>now=v,getReloads:()=>reloads,getPrompt:()=>promptText};
  }
+ function numberedInReadingOrder(entries){
+  const starts=new Map();
+  entries.forEach(e=>starts.set(e.r+","+e.c,[e.r,e.c]));
+  const keys=[...starts.values()].sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  const nums=new Map(keys.map((p,i)=>[p[0]+","+p[1],i+1]));
+  return entries.every(e=>e.num===nums.get(e.r+","+e.c));
+ }
  let a=open(""),api=a.api,el=a.el;
  ok(el("board").children.length===api.P.size*api.P.size,"board renders");checks++;
+ ok(numberedInReadingOrder(api.entries),"daily clue numbers in reading order");checks++;
  ok(!api.current().done,"starts unfinished");checks++;
  let sq=api.entries[0].cells[0];ok(api.cellEls[sq[0]][sq[1]].getAttribute("role")==="button","screen-reader square label");checks++;
  el("bHint").click();ok(api.current().guideUsed===1&&api.current().hintsUsed===0,"stage 1 does not reveal");checks++;
@@ -102,6 +110,7 @@ function runInteraction(html){
  const oldStreak=storage.get("cu:streak"),oldDay=storage.get("cu:lastDay");
  const practice=open("#practice"),p=practice.api;
  ok(p.CU_PRACTICE,"practice loads");checks++;
+ ok(numberedInReadingOrder(p.entries),"practice clue numbers in reading order");checks++;
  for(let i=0;i<p.entries.length;i++)for(let k=0;k<p.entries[i].cells.length;k++){p.select(i,k);p.type(p.entries[i].a[k]);}
  ok(p.current().done,"practice completes");checks++;
  ok(storage.get("cu:streak")===oldStreak&&storage.get("cu:lastDay")===oldDay,"practice does not change daily streak");checks++;
