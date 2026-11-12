@@ -1045,10 +1045,17 @@ var blocked=[], letters=[], locked=[], pencilled=[], nums=[], entries=P.entries;
       letters[r][c]=""; locked[r][c]=false; pencilled[r][c]=false; nums[r][c]=0;
     }
   }
-  var n=0;
+  // Conventional clue numbers follow row-major grid order, not source entry order.
+  // Across and down entries starting in the same square share one number.
+  var starts=Object.create(null),coords=[];
+  entries.forEach(function(e){
+    var key=e.r+","+e.c;
+    if(!starts[key]){starts[key]=true;coords.push([e.r,e.c]);}
+  });
+  coords.sort(function(a,b){return a[0]-b[0]||a[1]-b[1];});
+  coords.forEach(function(p,i){nums[p[0]][p[1]]=i+1;});
   for(var i=0;i<entries.length;i++){
     var e=entries[i];
-    if(!nums[e.r][e.c]) nums[e.r][e.c]=++n;
     e.num=nums[e.r][e.c];
     var v=CLUES[e.a]; e.clue = v[dayIndex() % v.length];
     e.cells=[];
