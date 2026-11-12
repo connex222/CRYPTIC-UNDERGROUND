@@ -2,14 +2,14 @@
 
 **Branch:** `improvement/cryptic-underground-fairness`  
 **Date:** 12 November 2026  
-**Status:** Diagnostic report only. No puzzle grids or solutions changed.
+**Status:** Historical 2026 grids are unchanged. A corrected future-only version of cu-0282 is included on the development branch; this table records the original corpus for audit traceability. See [correction ledger](CORRECTION-LEDGER.md).
 
 ## Key findings
 
 - The existing 458 puzzles contain **11,659 playable squares**, of which **2,576 (22.1%)** are unchecked (appear in exactly one clue answer).
 - **350 of 458** puzzles contain at least one unchecked square. Unchecked letters are not inherently invalid, but an excess reduces solving support from crossing entries.
 - **60 puzzles** have unchecked ratios of at least **40%** and are listed below, sorted by risk.
-- **cu-0282** is an unusually sparse 7×7 puzzle with **4 entries, 19 playable squares and 16 unchecked squares (84.2%)**. This is a strong editorial review candidate, not an automatic delete or replacement.
+- **Original cu-0282** has **4 entries, 19 playable squares and 16 unchecked squares (84.2%)**. Its historical 9 October 2026 instance is retained. Its next recurrence on 21 November 2027 uses **cu-0282-r2**, a newly checked 7×7 with 14 entries and 8/39 unchecked squares (20.5%).
 - The remaining 59 candidates have 40% unchecked squares; these are **review flags**, not proof of invalidity. Decisions depend on deliberate house style, clue difficulty, crossability and expected solving time.
 - Every entered word was verified to span a complete contiguous white run in its indicated direction; no entry starts or ends inside a longer run.
 - Tests verify that all playable squares have a consistent letter and all crossing letter overlaps agree. This is structural integrity, **not** a guarantee of fair clue wording.
@@ -81,7 +81,7 @@
 
 ## Editorial review procedure
 
-1. Review `cu-0282` manually for an intentional themed structure. If it is not deliberate, prepare a replacement grid in a **separate approved editorial change**, maintaining the daily schedule contract.
+1. **Addressed without changing history:** replace only future recurrences of cu-0282 with the 14-entry revision; verify the first cycle and future-cycle transition using `tests/rotation.cjs` and `tests/revised-daily.cjs`.
 2. Sample the other 59 flagged puzzles with attention to clue solvability when few crossers are supplied. A 40% unchecked grid is not intrinsically invalid; avoid a blind rejection rule.
 3. Evaluate whether beginner-facing days have too many demanding, weakly crossed answers. Preserve intentionally advanced puzzles with fair constructions.
 4. Record accepted exceptions and the rationale; do not rewrite an approved clue corpus merely because a numerical threshold is high.
