@@ -1101,7 +1101,11 @@ var cellEls = [];
       d.style.fontSize = Math.round(size*0.46)+"px";
       if(!blocked[r][c]){
         if(nums[r][c]) d.innerHTML = '<span class="num">'+nums[r][c]+'</span>';
-        (function(rr,cc){ d.addEventListener("click", function(){ tapCell(rr,cc); }); })(r,c);
+        d.setAttribute("role","button");d.tabIndex=-1;
+        (function(rr,cc){
+          d.addEventListener("click",function(){tapCell(rr,cc);});
+          d.addEventListener("keydown",function(ev){if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();tapCell(rr,cc);}});
+        })(r,c);
       }
       board.appendChild(d); cellEls[r][c]=d;
     }
@@ -1128,24 +1132,24 @@ function tapCell(r,c){
     var a=entryAt(r,c,"A"), d=entryAt(r,c,"D");
     cur = a>=0?a:d; pos = idxIn(entries[cur],r,c);
   }
-  draw();
+  hintStep=0;hideHint();draw();
 }
 function idxIn(e,r,c){
   for(var k=0;k<e.cells.length;k++) if(e.cells[k][0]===r&&e.cells[k][1]===c) return k;
   return 0;
 }
 function type(ch){
-  var e=entries[cur], cell=e.cells[pos];
-  if(locked[cell[0]][cell[1]]) { advance(1); return; }
-  letters[cell[0]][cell[1]] = ch;
+  var e=entries[cur],cell=e.cells[pos];
+  if(locked[cell[0]][cell[1]]){advance(1);draw();return;}
+  letters[cell[0]][cell[1]]=ch;pencilled[cell[0]][cell[1]]=pencilMode;
   cellEls[cell[0]][cell[1]].dataset.bad="0";
-  advance(1); save(); draw(); checkDone();
+  advance(1);save();draw();checkDone();
 }
 function backspace(){
   var e=entries[cur], cell=e.cells[pos];
-  if(letters[cell[0]][cell[1]] && !locked[cell[0]][cell[1]]) letters[cell[0]][cell[1]]="";
+  if(letters[cell[0]][cell[1]] && !locked[cell[0]][cell[1]]) {letters[cell[0]][cell[1]]="";pencilled[cell[0]][cell[1]]=false;}
   else { advance(-1); cell=entries[cur].cells[pos];
-         if(!locked[cell[0]][cell[1]]) letters[cell[0]][cell[1]]=""; }
+         if(!locked[cell[0]][cell[1]]) {letters[cell[0]][cell[1]]="";pencilled[cell[0]][cell[1]]=false;} }
   cellEls[cell[0]][cell[1]].dataset.bad="0"; save(); draw();
 }
 function advance(step){
@@ -1170,7 +1174,7 @@ function hop(step){
   var list=matchingIndices(), at=list.indexOf(cur);
   if(at<0) at=step>0 ? -1 : 0;
   cur=list[(at+step+list.length)%list.length];
-  pos=0; draw();
+  pos=0;hintStep=0;hideHint();draw();
 }
 
 /* ---------- render ---------- */
@@ -1184,10 +1188,22 @@ function draw(){
     var num = nums[r][c] ? '<span class="num">'+nums[r][c]+'</span>' : "";
     el.innerHTML = num + ch;
     el.className = "cell"
+      + (pencilled[r][c]?" pencil":"")
       + (locked[r][c]?" locked":"")
       + (el.dataset.bad==="1"?" bad":"")
       + (lit[r+","+c] ? (r===cc[0]&&c===cc[1] ? " cur" : " lit") : "");
+    var selected=r===cc[0]&&c===cc[1];
+    el.tabIndex=selected?0:-1;
+    el.setAttribute("aria-label","Row "+(r+1)+", column "+(c+1)+
+      (nums[r][c]?", clue "+nums[r][c]:"")+", "+(ch||"empty")+
+      (pencilled[r][c]?", tentative":"")+(locked[r][c]?", given":"")+
+      (selected?", selected":""));
+    el.setAttribute("aria-pressed",selected?"true":"false");
   }
+  document.getElementById("bDirection").textContent="Direction: "+(e.dir==="A"?"Across":"Down");
+  document.getElementById("bPencil").textContent="Pencil: "+(pencilMode?"On":"Off");
+  document.getElementById("bPencil").setAttribute("aria-pressed",String(pencilMode));
+  document.getElementById("bHint").textContent=hintStep===0?"Hint":hintStep===1?"Next hint":"Give one letter";
   document.getElementById("ref").textContent =
     e.num + (e.dir==="A"?" Across":" Down");
   document.getElementById("clue").textContent = e.clue;
@@ -1239,7 +1255,7 @@ document.getElementById("bReveal").addEventListener("click", function(){
   var e=entries[cur];
   for(var k=0;k<e.cells.length;k++){
     var r=e.cells[k][0], c=e.cells[k][1];
-    letters[r][c]=e.a[k]; locked[r][c]=true;
+    letters[r][c]=e.a[k]; pencilled[r][c]=false; locked[r][c]=true;
   }
   revealed++; clearMarks(); save(); draw(); checkDone();
   toast(e.num+(e.dir==="A"?" Across":" Down")+" revealed");
@@ -1308,7 +1324,7 @@ function checkDone(){
   for(var i=0;i<entries.length;i++){
     var e=entries[i];
     for(var k=0;k<e.cells.length;k++)
-      if(letters[e.cells[k][0]][e.cells[k][1]]!==e.a[k]) return;
+      if(letters[e.cells[k][0]][e.cells[k][1]]!==e.a[k] || pencilled[e.cells[k][0]][e.cells[k][1]]) return;
   }
   done=true;
   var run = recordStreak(); showStreak();
@@ -1333,7 +1349,7 @@ function checkDone(){
         var e=entries[cur];
         for(var k=0;k<e.cells.length;k++){
           var r=e.cells[k][0], c=e.cells[k][1];
-          if(!locked[r][c]) letters[r][c]="";
+          if(!locked[r][c]) {letters[r][c]="";pencilled[r][c]=false;}
         }
         pos=0; clearMarks(); save(); draw();
       });
