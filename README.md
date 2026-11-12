@@ -1,6 +1,6 @@
 # Cryptic Underground
 
-A daily mini cryptic crossword, sized for the commute. Grids are 5 x 5 or 7 x 7, and every clue is hand-written, with its wordplay checked.
+A daily mini cryptic crossword, sized for the commute. Grids are 5 x 5 or 7 x 7, with hand-written clues, automated crossword checks and an editorial correction log.
 
 **Play it:** https://connex222.github.io/CRYPTIC-UNDERGROUND/
 
@@ -14,6 +14,12 @@ Or download `index.html` and open it straight from your device. Everything is in
 ## Saving
 
 Your progress and settings are saved on the device you play on. Your data is not sent anywhere. Clearing the browser's data deletes it.
+
+## Puzzle quality and accessibility
+
+The app includes across/down controls, tentative pencil entries, progressive hints and spoiler-free completion results. Corrections to clue wordplay are tested without changing the intended answers.
+
+See [the QA report](docs/QA-FAIRNESS.md) and [editorial correction ledger](docs/CORRECTION-LEDGER.md). Automated testing is not a substitute for final human editorial and screen-reader review.
 
 ## Made by
 

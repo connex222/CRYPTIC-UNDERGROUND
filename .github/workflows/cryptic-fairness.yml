@@ -1,0 +1,71 @@
+name: Cryptic Underground fairness QA
+
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'tests/**'
+      - 'docs/EDITORIAL-EXCEPTIONS.md'
+      - '.github/workflows/cryptic-fairness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fairness:
+    name: Clues, grids, daily and interaction QA
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout proposed branch
+        uses: actions/checkout@v4
+      - name: Configure Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Structural and parsing regression tests
+        run: node tests/fairness.cjs
+      - name: Simulated complete daily and practice runs
+        run: node tests/interaction.cjs
+      - name: Daily rotation, calendar and UK daylight-saving boundaries
+        run: node tests/rotation.cjs
+      - name: Edited-clue proof checks and the improved future grid
+        run: node tests/revised-daily.cjs
+      - name: Editorial exception triage
+        run: node tests/editorial-review.cjs > editorial-review.json
+      - name: Attach editorial review evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cryptic-underground-editorial-review
+          path: editorial-review.json
+          if-no-files-found: error
+
+# This workflow only tests. It does not merge, publish, deploy or modify clue data.
+
+  browser:
+    name: Real Chromium accessibility and responsive puzzle run
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout proposed branch
+        uses: actions/checkout@v4
+      - name: Configure Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser test tooling (CI only)
+        run: npm install --no-save --no-package-lock playwright
+      - name: Install headless Chromium and Linux dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Execute real offline-browser puzzle QA
+        run: node tests/browser.cjs
+      - name: Preserve QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cryptic-underground-browser-qa
+          path: tests/.browser-evidence/
+          if-no-files-found: warn
+
+# No job publishes to GitHub Pages or to any other host.
