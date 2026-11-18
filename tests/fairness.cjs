@@ -88,7 +88,7 @@ function audit(html){
   assert(/pencilled\[e\.cells\[k\]\[0\]\]\[e\.cells\[k\]\[1\]\]/.test(html),"pencil completion guard missing");
   assert(!/ev\.key==="Tab"\)\{ ev\.preventDefault\(\); hop/.test(html),"keyboard Tab trapped");
   const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
-  assert(scripts.length===3,"unexpected script count");
+  assert(scripts.length===5,"expected original puzzle scripts plus embedded fullscreen/music controllers");
   scripts.forEach((m,i)=>{try{new Function(m[1]);}catch(e){throw Error("script "+(i+1)+" syntax: "+e.message);}});
   return {result:"PASS (static and corpus checks)",grids:daily.length+practice.length,daily:daily.length,practice:practice.length,answers:used.size,clues:variants,levels,crossings,checkedCells,entryCount:entriesCount,verifiedParsings:verified.length,editorialExceptions:palindromeIssues,warning:"Future answers remain inspectable in the offline HTML. Device/screen-reader QA outstanding."};
 }
