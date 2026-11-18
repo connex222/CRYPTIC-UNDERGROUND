@@ -13,10 +13,30 @@ fs.mkdirSync(shots,{recursive:true});
 let assertions=0;
 function check(value,message){assert(value,message);assertions++;}
 async function main(){
+ // Serve the checked-in scripts as JavaScript, not as the HTML entrypoint.
+ // Returning HTML for every URL masked missing assets and caused Chromium's
+ // "Unexpected token '<'" parse errors whenever the external scripts loaded.
+ const root=path.join(__dirname,"..");
+ const allowedScripts=new Set(["/collection-fullscreen.js","/original-puzzle-music.js"]);
  const server=http.createServer((req,res)=>{
-  if(req.url==="/favicon.ico"){res.writeHead(204);res.end();return;}
-  res.writeHead(200,{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"});
-  res.end(html);
+  const pathname=new URL(req.url,"http://127.0.0.1").pathname;
+  if(pathname==="/favicon.ico"){res.writeHead(204);res.end();return;}
+  if(pathname==="/"||pathname==="/index.html"){
+   res.writeHead(200,{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"});
+   res.end(html);return;
+  }
+  if(allowedScripts.has(pathname)){
+   try{
+    const source=fs.readFileSync(path.join(root,pathname.slice(1)));
+    res.writeHead(200,{"Content-Type":"text/javascript; charset=utf-8","Cache-Control":"no-store"});
+    res.end(source);
+   }catch{
+    res.writeHead(404,{"Content-Type":"text/plain; charset=utf-8"});res.end("Script not found");
+   }
+   return;
+  }
+  res.writeHead(404,{"Content-Type":"text/plain; charset=utf-8"});
+  res.end("Not found");
  });
  await new Promise(resolve=>server.listen(0,"127.0.0.1",resolve));
  const base="http://127.0.0.1:"+server.address().port+"/";
