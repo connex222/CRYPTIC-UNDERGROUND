@@ -9,7 +9,7 @@ A daily mini cryptic crossword, sized for the commute. Grids are 5 x 5 or 7 x 7,
 1. Open the link above in Chrome, Edge or Safari, on a phone, tablet or computer.
 2. On a phone, use the browser's **Add to Home Screen** option to keep it one tap away.
 
-Or download `index.html` and open it straight from your device. Everything is in that one file and it works with no signal.
+Or download **only** `index.html` and open it straight from your device. The crossword, puzzles, keyboard, fullscreen control and saved progress are all included in that single file and work without a network connection. The optional original soundtrack currently streams over the internet, and returning to the online Games Night catalogue also needs a connection.
 
 ## Saving
 
