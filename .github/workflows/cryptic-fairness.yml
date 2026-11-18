@@ -24,6 +24,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Standalone, offline HTML and approved script integrity
+        run: node tests/offline-single-file.cjs
       - name: Structural and parsing regression tests
         run: node tests/fairness.cjs
       - name: Simulated complete daily and practice runs
