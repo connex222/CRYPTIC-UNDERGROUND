@@ -1,7 +1,7 @@
 
 function runInteraction(html){
  const ok=(x,m)=>{if(!x)throw Error("Interaction QA failed: "+m);};
- const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(x=>x[1]);ok(scripts.length===3,"script count");
+ const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(x=>x[1]);ok(scripts.length===5,"core app plus two approved embedded controllers");
  const storage=new Map();let checks=0;
  function open(hash,dateOverride){
   let doc,now=dateOverride||"2026-11-12T13:59:00Z",reloads=0,promptText="";
@@ -60,7 +60,7 @@ function runInteraction(html){
   const computed=el=>({position:["banner","toast","reference"].includes(el.id)?"fixed":"static",display:"block",paddingTop:"8px",paddingBottom:"8px"});
   const returned="\nreturn {P,entries,letters,pencilled,locked,cellEls,PUZZLE_DAY,CU_PRACTICE,dayIndex,type,backspace,tapCell,checkDone, current(){return {cur,pos,hintsUsed,guideUsed,revealed,done};},select(i,k){cur=i;pos=k;hintStep=0;hideHint();draw();}};";
   let counter=0;
-  const api=(new Function("document","window","location","localStorage","navigator","Date","setTimeout","clearTimeout","MutationObserver","getComputedStyle",scripts.join("\n")+returned))
+  const api=(new Function("document","window","location","localStorage","navigator","Date","setTimeout","clearTimeout","MutationObserver","getComputedStyle",scripts.slice(0,3).join("\n")+returned))
      (doc,win,location,localStorage,{},Clock,()=>++counter,()=>{},MutationObserver,computed);
   return {api,el,doc,body,win,location,setNow:v=>now=v,getReloads:()=>reloads,getPrompt:()=>promptText};
  }
